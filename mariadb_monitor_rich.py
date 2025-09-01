@@ -449,7 +449,7 @@ class MariaDBCursesMonitor:
                                          "MariaDB Connections")
 
         if 'threads_running' in stats:
-            y_pos = self.draw_program_bar(stdscr, y_pos, 5, bar_width,
+            y_pos = self.draw_progress_bar(stdscr, y_pos, 5, bar_width,
                                          stats['threads_running'],
                                          max(stats.get('current_connections', 1), 1),
                                          "Running Threads")
@@ -532,14 +532,14 @@ class MariaDBCursesMonitor:
 
 def main():
     """Main function"""
-    print("🚀 Starting MariaDB & PHP-FPM Curses Monitor...")
+    print("Starting MariaDB & PHP-FPM Curses Monitor...")
     print("Press 'q' to quit")
 
     monitor = MariaDBCursesMonitor()
     exit_code = monitor.run()
 
     print("
-👋 Monitor stopped. Goodbye!")
+Monitor stopped. Goodbye!")
     return exit_code
 
 if __name__ == "__main__":
