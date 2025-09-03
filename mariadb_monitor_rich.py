@@ -20,6 +20,13 @@ except ImportError:
     os.system("pip3 install mysql-connector-python")
     import mysql.connector
 
+try:
+    import psutil
+except ImportError:
+    print("Installing psutil...")
+    os.system("pip3 install psutil")
+    import psutil
+
 # Database configuration
 DB_CONFIG = {
     'host': 'localhost',
@@ -78,10 +85,13 @@ class MariaDBCursesMonitor:
             return -1 # Indicate error
 
     def get_stats(self): # Renamed from get_connection_stats
-        """Get current connection statistics for MariaDB and PHP-FPM"""
+        """Get current connection statistics for MariaDB, PHP-FPM, and System"""
         conn = self.get_db_connection()
         
-        stats = {}
+        stats = {
+            'cpu_percent': psutil.cpu_percent(interval=None),
+            'ram_percent': psutil.virtual_memory().percent
+        }
 
         if not conn:
             # Still return php-fpm stats even if db connection fails
@@ -220,7 +230,7 @@ class MariaDBCursesMonitor:
         stdscr.addch(bar_y, x + width + 1, ']', self.colors['white'])
 
         # Add percentage, values and status
-        info_text = f" {percentage:5.1f}% ({current:,}/{maximum:,})"
+        info_text = f" {percentage:5.1f}% ({current:,.0f}/{maximum:,.0f})"
         stdscr.addstr(bar_y, x + width + 3, info_text, color)
 
         # Add Thai status on next line
@@ -420,7 +430,7 @@ class MariaDBCursesMonitor:
         height, width = stdscr.getmaxyx()
 
         # Header
-        header = "🗄️ MariaDB & PHP-FPM Real-time Monitor"
+        header = "💻 System & MariaDB Real-time Monitor"
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         if not stats:
@@ -441,6 +451,14 @@ class MariaDBCursesMonitor:
         # Draw progress bars
         y_pos = 4
         bar_width = 40
+
+        if 'cpu_percent' in stats:
+            y_pos = self.draw_progress_bar(stdscr, y_pos, 5, bar_width,
+                                           stats['cpu_percent'], 100, "CPU Usage")
+
+        if 'ram_percent' in stats:
+            y_pos = self.draw_progress_bar(stdscr, y_pos, 5, bar_width,
+                                           stats['ram_percent'], 100, "RAM Usage")
 
         if 'current_connections' in stats:
             y_pos = self.draw_progress_bar(stdscr, y_pos, 5, bar_width,
@@ -489,6 +507,8 @@ class MariaDBCursesMonitor:
         stdscr.nodelay(True)  # Non-blocking input
         stdscr.timeout(100)   # Timeout for getch()
         curses.curs_set(0)    # Hide cursor
+
+        psutil.cpu_percent(interval=None) # Initialize cpu_percent
 
         while self.is_running:
             try:
