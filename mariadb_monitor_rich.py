@@ -538,8 +538,7 @@ def main():
     monitor = MariaDBCursesMonitor()
     exit_code = monitor.run()
 
-    print("
-Monitor stopped. Goodbye!")
+    print("Monitor stopped. Goodbye!")
     return exit_code
 
 if __name__ == "__main__":
